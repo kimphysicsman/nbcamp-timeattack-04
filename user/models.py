@@ -1,12 +1,13 @@
+from datetime import datetime
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 
 class UserManager(BaseUserManager):
-    def create_user(self, email, username, type_id, password=None):
+    def create_user(self, email, username, type, password=None):
         if not username:
             raise ValueError('Users must have an username')
 
-        type_obj = UserType.objects.get(id=type_id)
+        type_obj = UserType.objects.get(id=type)
         user = self.model(
             email=email,
             username=username,
@@ -17,11 +18,11 @@ class UserManager(BaseUserManager):
         return user
     
     # python manage.py createsuperuser 사용 시 해당 함수가 사용됨
-    def create_superuser(self, email, username, type_id, password=None):
+    def create_superuser(self, email, username, type, password=None):
         user = self.create_user(
             email=email,
             username=username,
-            type_id=type_id,
+            type=type,
             password=password,
         )
         user.is_admin = True
@@ -50,7 +51,7 @@ class User(AbstractBaseUser):
     is_admin = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username', 'type_id']
+    REQUIRED_FIELDS = ['username', 'type']
 
     objects = UserManager()
 
@@ -64,3 +65,11 @@ class User(AbstractBaseUser):
     def is_staff(self):
         return self.is_admin
 
+
+class UserLog(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    login_date = models.DateTimeField(default=datetime.now())
+    apply_date = models.DateTimeField(default=datetime.now())
+
+    def __str__(self):
+        return f"{self.user.username}'s userlog"
